@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useRef, useState } from "react"
+import React, { FC, useEffect, useRef, useState } from "react"
 import { TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
 import { $presets, Button, Icon, Screen, Text } from "../components"
 import { useStores } from "../models"
@@ -7,6 +7,7 @@ import { AppStackScreenProps } from "../navigators"
 import { colors, spacing, typography } from "../theme"
 import { SafeAreaView } from "react-native-safe-area-context"
 import PhoneInput from "react-native-phone-number-input"
+import * as LocalAuthentication from "expo-local-authentication"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -15,17 +16,14 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
 
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
+  const [biometricAvailable, setBiometricAvailable] = useState(false)
   const {
     authenticationStore: { setAuthToken, validationError },
   } = useStores()
 
   const [value, setValue] = useState("")
-  const [formattedValue, setFormattedValue] = useState("")
-  const [valid, setValid] = useState(false)
-  const [showMessage, setShowMessage] = useState(false)
+  const [_, setFormattedValue] = useState("")
   const phoneInput = useRef<PhoneInput>(null)
-
-  const error = isSubmitted ? validationError : ""
 
   function login() {
     setIsSubmitted(true)
@@ -49,6 +47,40 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
     bottom: 0,
     width: "100%",
     height,
+  }
+
+  useEffect(() => {
+    checkBiometricSupport()
+  }, [])
+
+  async function checkBiometricSupport() {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync()
+    const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
+    setBiometricAvailable(hasHardware && supportedAuthTypes.length > 0)
+  }
+
+  // Trigger biometric authentication
+  async function handleBiometricAuth() {
+    const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
+
+    // Check if Face ID is available
+    const isFaceIDAvailable = supportedAuthTypes.includes(
+      LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+    )
+
+    const authOptions = {
+      promptMessage: "Authenticate to login",
+      fallbackLabel: "Use PIN",
+      disableDeviceFallback: isFaceIDAvailable, // Disables fallback if Face ID is available
+    }
+
+    const auth = await LocalAuthentication.authenticateAsync(authOptions)
+
+    if (auth.success) {
+      login()
+    } else {
+      console.log("Authentication failed", auth)
+    }
   }
 
   return (
@@ -112,39 +144,45 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
             />
 
             <View
-              style={{
-                marginTop: spacing.xxl,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                width: "100%",
-              }}
+              style={
+                {
+                  marginTop: spacing.xxl,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  width: "100%",
+                } as ViewStyle
+              }
             >
               <Text
                 text="By tapping the button below, you agree to our Terms of Service and Privacy Policy."
                 preset="subheading"
-                style={{
-                  ...$enterDetails,
-                  marginRight: spacing.lg,
-                  width: (width - spacing.lg * 2) * 0.7,
-                  fontSize: 12,
-                  color: colors.textDim,
-                }}
+                style={
+                  {
+                    ...$enterDetails,
+                    marginRight: spacing.lg,
+                    width: (width - spacing.lg * 2) * 0.7,
+                    fontSize: 12,
+                    color: colors.textDim,
+                  } as ViewStyle
+                }
               />
               <Button
                 testID="login-button"
                 // tx="loginScreen.tapToLogIn"
-                style={{
-                  ...$tapButton,
-                  width: (width - spacing.lg * 2) * 0.2,
-                  borderRadius: 100,
-                  borderColor: colors.palette.accent500,
-                  borderWidth: 1,
-                  borderStyle: "solid",
-                }}
-                RightAccessory={(props) => <Icon icon="caretRight" color={colors.text} />}
+                style={
+                  {
+                    ...$tapButton,
+                    width: (width - spacing.lg * 2) * 0.2,
+                    borderRadius: 100,
+                    borderColor: colors.palette.accent500,
+                    borderWidth: 1,
+                    borderStyle: "solid",
+                  } as ViewStyle
+                }
+                RightAccessory={() => <Icon icon="caretRight" color={colors.text} />}
                 preset="reversed"
-                onPress={login}
+                onPress={biometricAvailable ? handleBiometricAuth : login}
               />
             </View>
           </View>
