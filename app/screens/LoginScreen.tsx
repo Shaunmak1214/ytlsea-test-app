@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import PhoneInput from "react-native-phone-number-input"
 import * as LocalAuthentication from "expo-local-authentication"
 import * as Contacts from "expo-contacts"
+import * as SecureStore from "expo-secure-store"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -50,8 +51,27 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
     height,
   }
 
+  async function save(key: string, value: string) {
+    await SecureStore.setItemAsync(key, value)
+  }
+
+  async function getValueFor(key: string) {
+    const result = await SecureStore.getItemAsync(key)
+    if (result) {
+      alert("🔐 Here's your value 🔐 \n" + result)
+    } else {
+      alert("No values stored under that key.")
+    }
+  }
+
   useEffect(() => {
     checkBiometricSupport()
+
+    // Save the value
+    save("key", "value")
+
+    // Get the value
+    console.log(getValueFor("key"))
   }, [])
 
   async function checkBiometricSupport() {
