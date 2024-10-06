@@ -11,7 +11,7 @@ import React from "react"
 import * as Screens from "app/screens"
 import Config from "../config"
 import { useStores } from "../models"
-import { DemoNavigator, DemoTabParamList } from "./DemoNavigator"
+import { StackNavigator, YTLTabParamList } from "./Navigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { colors } from "app/theme"
 
@@ -29,11 +29,8 @@ import { colors } from "app/theme"
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
 export type AppStackParamList = {
-  Welcome: undefined
   Login: undefined
-  Demo: NavigatorScreenParams<DemoTabParamList>
-  // 🔥 Your screens go here
-  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+  Stack: NavigatorScreenParams<YTLTabParamList>
 }
 
 /**
@@ -60,13 +57,11 @@ const AppStack = observer(function AppStack() {
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false, navigationBarColor: colors.transparent }}
-      initialRouteName={isAuthenticated ? "Welcome" : "Login"}
+      initialRouteName={isAuthenticated ? "Stack" : "Login"}
     >
       {isAuthenticated ? (
         <>
-          {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
-
-          <Stack.Screen name="Demo" component={DemoNavigator} />
+          <Stack.Screen name="Stack" component={StackNavigator} />
         </>
       ) : (
         <>

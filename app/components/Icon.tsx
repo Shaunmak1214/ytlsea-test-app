@@ -108,6 +108,11 @@ export const iconRegistry = {
   slack: require("../../assets/icons/demo/slack.png"),
   view: require("../../assets/icons/view.png"),
   x: require("../../assets/icons/x.png"),
+  home: require("../../assets/icons/ytlsea-bottomnav-home-icon.png"),
+  ytl_settings: require("../../assets/icons/ytlsea-bottomnav-settings-icon.png"),
+  ytl_add: require("../../assets/icons/ytlsea-add-balance-icon.png"),
+  ytl_scan: require("../../assets/icons/ytlsea-scan-icon.png"),
+  ytl_pay: require("../../assets/icons/ytlsea-pay-icon.png"),
 }
 
 const $imageStyleBase: ImageStyle = {

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useEffect, useRef, useState } from "react"
+import React, { FC, useEffect, useState } from "react"
 import { TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
 import { $presets, Button, Icon, Screen, Text } from "../components"
 import { useStores } from "../models"
@@ -258,7 +258,7 @@ const $safeAreaView: ViewStyle = {
 }
 
 const $innerScreenContentContainer: ViewStyle = {
-  paddingVertical: spacing.xxl,
+  paddingVertical: spacing.lg,
   paddingHorizontal: spacing.lg,
   zIndex: 1,
 }
