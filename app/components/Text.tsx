@@ -93,7 +93,7 @@ const $baseStyle: StyleProp<TextStyle> = [
   { color: colors.text },
 ]
 
-const $presets = {
+export const $presets = {
   default: $baseStyle,
 
   bold: [$baseStyle, $fontWeightStyles.bold] as StyleProp<TextStyle>,
@@ -105,6 +105,15 @@ const $presets = {
   formLabel: [$baseStyle, $fontWeightStyles.medium] as StyleProp<TextStyle>,
 
   formHelper: [$baseStyle, $sizeStyles.sm, $fontWeightStyles.normal] as StyleProp<TextStyle>,
+
+  formError: [
+    $baseStyle,
+    $sizeStyles.sm,
+    $fontWeightStyles.normal,
+    {
+      color: colors.error,
+    },
+  ] as StyleProp<TextStyle>,
 }
 
 const $rtlStyle: TextStyle = isRTL ? { writingDirection: "rtl" } : {}

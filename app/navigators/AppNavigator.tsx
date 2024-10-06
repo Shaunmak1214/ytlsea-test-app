@@ -63,7 +63,7 @@ const AppStack = observer(function AppStack() {
 
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false, navigationBarColor: colors.background }}
+      screenOptions={{ headerShown: false, navigationBarColor: colors.transparent }}
       initialRouteName={isAuthenticated ? "Welcome" : "Login"}
     >
       {isAuthenticated ? (
@@ -88,16 +88,10 @@ export interface NavigationProps
   extends Partial<React.ComponentProps<typeof NavigationContainer>> {}
 
 export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
-  const colorScheme = useColorScheme()
-
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      theme={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-      {...props}
-    >
+    <NavigationContainer ref={navigationRef} theme={DefaultTheme} {...props}>
       <AppStack />
     </NavigationContainer>
   )
