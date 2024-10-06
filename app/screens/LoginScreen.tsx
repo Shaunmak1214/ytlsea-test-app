@@ -10,6 +10,9 @@ import PhoneInput from "react-native-phone-number-input"
 import * as LocalAuthentication from "expo-local-authentication"
 import * as Contacts from "expo-contacts"
 import * as SecureStore from "expo-secure-store"
+import { useForm, Controller } from "react-hook-form"
+import { loginSchema } from "app/utils/schemas/loginSchemas"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -20,35 +23,42 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   const [attemptsCount, setAttemptsCount] = useState(0)
   const [biometricAvailable, setBiometricAvailable] = useState(false)
   const {
-    authenticationStore: { setAuthToken, validationError },
+    authenticationStore: { setAuthToken, setAuthPhoneNumber },
   } = useStores()
 
   const [value, setValue] = useState("")
   const [_, setFormattedValue] = useState("")
-  const phoneInput = useRef<PhoneInput>(null)
+
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+    getValues,
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  })
+
+  useEffect(() => {
+    console.log("errors", errors)
+  }, [errors])
+
+  const onSubmit = (data: any) => {
+    console.log(data)
+    login()
+  }
 
   function login() {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
-    if (validationError) return
-
     // Make a request to your server to get an authentication token.
     // If successful, reset the fields and set the token.
     setIsSubmitted(false)
 
+    setAuthPhoneNumber(getValues("phoneNumber"))
+
     // We'll mock this with a fake token.
     setAuthToken(String(Date.now()))
-  }
-
-  const videoStyle = {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height,
   }
 
   async function save(key: string, value: string) {
@@ -58,9 +68,9 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   async function getValueFor(key: string) {
     const result = await SecureStore.getItemAsync(key)
     if (result) {
-      alert("🔐 Here's your value 🔐 \n" + result)
+      // alert("🔐 Here's your value 🔐 \n" + result)
     } else {
-      alert("No values stored under that key.")
+      // alert("No values stored under that key.")
     }
   }
 
@@ -71,7 +81,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
     save("key", "value")
 
     // Get the value
-    console.log(getValueFor("key"))
+    // console.log(getValueFor("key"))
   }, [])
 
   async function checkBiometricSupport() {
@@ -86,7 +96,7 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
       })
 
       if (contactResponse.data.length > 0) {
-        console.log(contactResponse.data[0])
+        // console.log(contactResponse.data[0])
       }
     }
   }
@@ -140,39 +150,55 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
               <Text tx="loginScreen.hint" size="sm" weight="light" style={$hint} />
             )}
 
-            <PhoneInput
-              ref={phoneInput}
-              defaultValue={value}
-              defaultCode="MY"
-              layout="second"
-              onChangeText={(text) => {
-                setValue(text)
-              }}
-              onChangeFormattedText={(text) => {
-                setFormattedValue(text)
-              }}
-              containerStyle={{
-                backgroundColor: colors.transparent,
-              }}
-              textContainerStyle={{
-                backgroundColor: colors.transparent,
-              }}
-              textInputStyle={
-                {
-                  ...$fontNumberTextStyle,
-                  marginLeft: -10,
-                } as TextStyle
-              }
-              codeTextStyle={$fontNumberTextStyle}
-              withDarkTheme
-              withShadow
-              autoFocus
-            />
+            <Controller
+              name="phoneNumber"
+              control={control}
+              defaultValue=""
+              rules={{ required: true }}
+              render={({ field, fieldState: { error } }) => (
+                <>
+                  <PhoneInput
+                    // ref={phoneInput}
+                    defaultValue={value}
+                    defaultCode="MY"
+                    layout="second"
+                    onChangeText={(text) => {
+                      setValue(text)
+                    }}
+                    onChangeFormattedText={(text) => {
+                      setFormattedValue(text)
+                      field.onChange(text)
+                    }}
+                    containerStyle={{
+                      backgroundColor: colors.transparent,
+                    }}
+                    textContainerStyle={{
+                      backgroundColor: colors.transparent,
+                    }}
+                    textInputStyle={
+                      {
+                        ...$fontNumberTextStyle,
+                        marginLeft: -10,
+                      } as TextStyle
+                    }
+                    codeTextStyle={$fontNumberTextStyle}
+                    withDarkTheme
+                    withShadow
+                    autoFocus
+                  />
 
-            <Text
-              text="Please input valid phone number."
-              preset="formError"
-              style={$enterDetails}
+                  {error && (
+                    <Text
+                      text="Please input valid phone number."
+                      preset="formError"
+                      style={{
+                        ...$enterDetails,
+                        marginTop: spacing.sm,
+                      }}
+                    />
+                  )}
+                </>
+              )}
             />
 
             <View
@@ -201,7 +227,6 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
               />
               <Button
                 testID="login-button"
-                // tx="loginScreen.tapToLogIn"
                 style={
                   {
                     ...$tapButton,
@@ -214,7 +239,10 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
                 }
                 RightAccessory={() => <Icon icon="caretRight" color={colors.text} />}
                 preset="reversed"
-                onPress={biometricAvailable ? handleBiometricAuth : login}
+                onPress={() => {
+                  // biometricAvailable ? handleBiometricAuth() : login()
+                  handleSubmit(onSubmit)()
+                }}
               />
             </View>
           </View>
