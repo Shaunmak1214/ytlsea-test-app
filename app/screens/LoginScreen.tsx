@@ -8,6 +8,7 @@ import { colors, spacing, typography } from "../theme"
 import { SafeAreaView } from "react-native-safe-area-context"
 import PhoneInput from "react-native-phone-number-input"
 import * as LocalAuthentication from "expo-local-authentication"
+import * as Contacts from "expo-contacts"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -56,7 +57,18 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
   async function checkBiometricSupport() {
     const hasHardware = await LocalAuthentication.hasHardwareAsync()
     const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
+    const { status: contactStatus } = await Contacts.requestPermissionsAsync()
     setBiometricAvailable(hasHardware && supportedAuthTypes.length > 0)
+
+    if (contactStatus === "granted") {
+      const contactResponse = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+      })
+
+      if (contactResponse.data.length > 0) {
+        console.log(contactResponse.data[0])
+      }
+    }
   }
 
   // Trigger biometric authentication
