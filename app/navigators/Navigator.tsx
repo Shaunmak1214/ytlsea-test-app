@@ -9,7 +9,10 @@ import { colors, spacing, typography } from "../theme"
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { AccountsScreen } from "app/screens/Accounts"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import { TransferScreen } from "app/screens/Transfer"
+import { PaymentMethodScreen } from "app/screens/Transfers/PaymentMethod"
+import { ContactListScreen } from "app/screens/Transfers/ContactList"
+import { TransferScreen } from "app/screens/Transfers/Transfer"
+import { ConfirmationScreen } from "app/screens/Transfers/Confirmation"
 
 export type YTLTabParamList = {
   Accounts: undefined
@@ -18,7 +21,10 @@ export type YTLTabParamList = {
 
 export type YTLStackParamList = {
   Accounts: undefined
+  PaymentMethod: undefined
+  ContactList: undefined
   Transfer: undefined
+  Confirmation: undefined
 }
 
 export type DemoTabScreenProps<T extends keyof YTLTabParamList> = CompositeScreenProps<
@@ -34,7 +40,10 @@ function AccountsStackNavigator() {
   return (
     <AccountsStack.Navigator screenOptions={{ headerShown: false }}>
       <AccountsStack.Screen name="Accounts" component={AccountsScreen} />
+      <AccountsStack.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+      <AccountsStack.Screen name="ContactList" component={ContactListScreen} />
       <AccountsStack.Screen name="Transfer" component={TransferScreen} />
+      <AccountsStack.Screen name="Confirmation" component={ConfirmationScreen} />
     </AccountsStack.Navigator>
   )
 }
@@ -47,7 +56,7 @@ export function StackNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
-        tabBarStyle: [$tabBar, { height: bottom + 70 }],
+        tabBarStyle: [$tabBar, { height: bottom + 68 }],
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.text,
         tabBarLabelStyle: $tabBarLabel,

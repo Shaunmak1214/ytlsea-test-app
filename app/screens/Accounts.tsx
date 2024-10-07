@@ -30,148 +30,142 @@ export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(func
 
   return (
     <>
-      <SafeAreaView style={$safeAreaView}>
-        <Screen preset="scroll" keyboardShouldPersistTaps="always">
-          <View
-            style={{
-              ...$innerScreenContentContainer,
-              minHeight: height,
-            }}
-          >
-            <View style={$headingViewContainer}>
-              <View style={$headingRow}>
-                <Text text="Good Morning 👋" preset="heading" style={$heading} />
-                <TouchableOpacity
-                  activeOpacity={1}
-                  style={$headingRowRightIcon}
-                  onPress={() => {
-                    navigation.navigate("Settings")
-                  }}
-                >
-                  <Icon icon="settings" color={colors.palette.primary500} size={24} />
-                </TouchableOpacity>
-              </View>
-              <Text text="Shaun Mak." preset="subheading" style={$muted} />
+      <Screen preset="scroll" keyboardShouldPersistTaps="always" safeAreaEdges={["top"]}>
+        <View
+          style={{
+            ...$innerScreenContentContainer,
+            minHeight: height,
+          }}
+        >
+          <View style={$headingViewContainer}>
+            <View style={$headingRow}>
+              <Text text="Good Morning 👋" preset="heading" style={$heading} />
+              <TouchableOpacity
+                activeOpacity={1}
+                style={$headingRowRightIcon}
+                onPress={() => {
+                  navigation.navigate("Settings")
+                }}
+              >
+                <Icon icon="settings" color={colors.palette.primary500} size={24} />
+              </TouchableOpacity>
             </View>
-
-            <View style={$CTAContainerView}>
-              <Text text="Total balance" preset="subheading" style={$containerHeading} />
-              <View style={$balanceContainer}>
-                <Text text="$100.00" preset="heading" style={$balance} />
-                <TouchableOpacity activeOpacity={1} style={$balanceViewerToggle} onPress={() => {}}>
-                  <Icon icon="view" color={colors.palette.primary600} size={20} />
-                </TouchableOpacity>
-              </View>
-
-              <Grid style={$CTAButtonGroup}>
-                <Col size={1.5}>
-                  <Button
-                    text="Reload"
-                    style={$CTAPrimaryButton}
-                    textStyle={$CTAPrimaryButtonText}
-                    RightAccessory={() => (
-                      <Icon
-                        icon="ytl_add"
-                        color={colors.palette.primary600}
-                        style={$CTAButtonIcon}
-                      />
-                    )}
-                    preset="reversed"
-                    onPress={() => {
-                      navigation.navigate("Transfer")
-                    }}
-                  />
-                </Col>
-                <Col size={1.5}>
-                  <Button
-                    text="Pay"
-                    style={$CTASecondaryButton}
-                    textStyle={$CTASecondaryButtonText}
-                    RightAccessory={() => (
-                      <Icon
-                        icon="ytl_pay"
-                        color={colors.palette.primary600}
-                        style={$CTAButtonIcon}
-                      />
-                    )}
-                    preset="reversed"
-                    onPress={() => {}}
-                  />
-                </Col>
-                <Col>
-                  <Button
-                    text="More"
-                    style={$CTASecondaryButton}
-                    textStyle={$CTASecondaryButtonText}
-                    preset="reversed"
-                    onPress={() => {}}
-                  />
-                </Col>
-              </Grid>
-            </View>
-
-            <View style={$listContainerStyle}>
-              <Text
-                text="Recent Transactions"
-                preset="heading"
-                style={
-                  {
-                    ...$heading,
-                    fontSize: 18,
-                  } as TextStyle
-                }
-              />
-
-              <View style={$listStyle}>
-                <ListView<string>
-                  data={listData}
-                  estimatedItemSize={1}
-                  renderItem={({ item, index }) => (
-                    <View style={$RecentTransactionsItem}>
-                      <View
-                        style={
-                          {
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                          } as ViewStyle
-                        }
-                      >
-                        <View style={$RecentTransactionsItemAvatar}>
-                          <UserAvatar
-                            size={45}
-                            name="Avishay Bar"
-                            bgColors={["#141414FF", "#3F3F3FFF"]}
-                          />
-                        </View>
-                        <View style={$RecentTransactionsItemDetails}>
-                          <Text
-                            text="Avishay Bar"
-                            preset="bold"
-                            style={$RecentTransactionsItemDetailsText}
-                          />
-                          <Text
-                            text="1 Jul 2024"
-                            preset="subheading"
-                            style={$RecentTransactionsItemDetailsSubText}
-                          />
-                        </View>
-                      </View>
-
-                      <Text
-                        text="RM 400.40"
-                        preset="subheading"
-                        style={$RecentTransactionsItemHeadingText}
-                      />
-                    </View>
-                  )}
-                />
-              </View>
-            </View>
-
-            <View style={$RecentTransactions}></View>
+            <Text text="Shaun Mak." preset="subheading" style={$muted} />
           </View>
-        </Screen>
-      </SafeAreaView>
+
+          <View style={$CTAContainerView}>
+            <Text text="Total balance" preset="subheading" style={$containerHeading} />
+            <View style={$balanceContainer}>
+              <Text text="$100.00" preset="heading" style={$balance} />
+              <TouchableOpacity activeOpacity={1} style={$balanceViewerToggle} onPress={() => {}}>
+                <Icon icon="view" color={colors.palette.primary600} size={20} />
+              </TouchableOpacity>
+            </View>
+
+            <Grid style={$CTAButtonGroup}>
+              <Col size={1.5}>
+                <Button
+                  text="Reload"
+                  style={$CTAPrimaryButton}
+                  textStyle={$CTAPrimaryButtonText}
+                  RightAccessory={() => (
+                    <Icon icon="ytl_add" color={colors.palette.primary600} style={$CTAButtonIcon} />
+                  )}
+                  preset="reversed"
+                  onPress={() => {
+                    navigation.navigate("PaymentMethod")
+                  }}
+                />
+              </Col>
+              <Col size={1.5}>
+                <Button
+                  text="Pay"
+                  style={$CTASecondaryButton}
+                  textStyle={$CTASecondaryButtonText}
+                  RightAccessory={() => (
+                    <Icon icon="ytl_pay" color={colors.palette.primary600} style={$CTAButtonIcon} />
+                  )}
+                  preset="reversed"
+                  onPress={() => {
+                    navigation.navigate("PaymentMethod")
+                  }}
+                />
+              </Col>
+              <Col>
+                <Button
+                  text="More"
+                  style={$CTASecondaryButton}
+                  textStyle={$CTASecondaryButtonText}
+                  preset="reversed"
+                  onPress={() => {
+                    navigation.navigate("PaymentMethod")
+                  }}
+                />
+              </Col>
+            </Grid>
+          </View>
+
+          <View style={$listContainerStyle}>
+            <Text
+              text="Recent Transactions"
+              preset="heading"
+              style={
+                {
+                  ...$heading,
+                  fontSize: 18,
+                } as TextStyle
+              }
+            />
+
+            <View style={$listStyle}>
+              <ListView<string>
+                data={listData}
+                estimatedItemSize={1}
+                renderItem={({ item, index }) => (
+                  <View style={$RecentTransactionsItem}>
+                    <View
+                      style={
+                        {
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        } as ViewStyle
+                      }
+                    >
+                      <View style={$RecentTransactionsItemAvatar}>
+                        <UserAvatar
+                          size={45}
+                          name="Avishay Bar"
+                          bgColors={["#141414FF", "#3F3F3FFF"]}
+                        />
+                      </View>
+                      <View style={$RecentTransactionsItemDetails}>
+                        <Text
+                          text="Avishay Bar"
+                          preset="bold"
+                          style={$RecentTransactionsItemDetailsText}
+                        />
+                        <Text
+                          text="1 Jul 2024"
+                          preset="subheading"
+                          style={$RecentTransactionsItemDetailsSubText}
+                        />
+                      </View>
+                    </View>
+
+                    <Text
+                      text="RM 400.40"
+                      preset="subheading"
+                      style={$RecentTransactionsItemHeadingText}
+                    />
+                  </View>
+                )}
+              />
+            </View>
+          </View>
+
+          <View style={$RecentTransactions}></View>
+        </View>
+      </Screen>
     </>
   )
 })
@@ -185,7 +179,6 @@ const $innerScreenContentContainer: ViewStyle = {
   paddingTop: spacing.lg,
   paddingHorizontal: spacing.lg,
   zIndex: 1,
-  height: "100%",
 }
 
 const $headingViewContainer: ViewStyle = {

@@ -113,6 +113,8 @@ export const iconRegistry = {
   ytl_add: require("../../assets/icons/ytlsea-add-balance-icon.png"),
   ytl_scan: require("../../assets/icons/ytlsea-scan-icon.png"),
   ytl_pay: require("../../assets/icons/ytlsea-pay-icon.png"),
+  ytl_duitnow: require("../../assets/icons/ytlsea-duitnow-icon.png"),
+  ytl_contact: require("../../assets/icons/ytlsea-contact-icon.png"),
 }
 
 const $imageStyleBase: ImageStyle = {
