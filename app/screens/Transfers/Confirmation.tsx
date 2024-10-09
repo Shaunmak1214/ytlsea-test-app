@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useEffect, useState } from "react"
+import React, { FC } from "react"
 import {
   ImageStyle,
   TextStyle,
@@ -8,15 +8,11 @@ import {
   View,
   ViewStyle,
 } from "react-native"
-import { Button, Header, Icon, Screen, Text, TextField } from "../../components"
+import { Button, Header, Icon, Screen, Text } from "../../components"
 import { AppStackScreenProps } from "../../navigators"
 import { colors, spacing, typography } from "../../theme"
-import * as Contacts from "expo-contacts"
-import { useNavigation, useRoute } from "@react-navigation/native"
-import UserAvatar from "react-native-user-avatar"
-import { Controller, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { loginSchema } from "app/utils/schemas/loginSchemas"
+import { useNavigation } from "@react-navigation/native"
+import { Col, Grid, Row } from "react-native-easy-grid"
 
 interface ConfirmationScreenrops extends AppStackScreenProps<"Login"> {}
 
@@ -25,8 +21,6 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
 ) {
   const { height } = useWindowDimensions()
   const navigation = useNavigation()
-
-  const route = useRoute()
 
   return (
     <>
@@ -37,21 +31,129 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
             minHeight: height,
           }}
         >
-          <Header
-            LeftActionComponent={
-              <TouchableOpacity
-                style={$customLeftAction}
-                onPress={() => {
-                  navigation.goBack()
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Icon icon="ytl_star" size={175} />
+
+            <View
+              style={{
+                height: spacing.md,
+              }}
+            />
+
+            <Text testID="login-heading" text="Transfer Complete" preset="heading" style={$logIn} />
+            <Text
+              text="Tranferring a total of RM10.00 to Shinly Eu"
+              preset="subheading"
+              style={$enterDetails}
+            />
+
+            <Grid
+              style={{
+                width: "100%",
+              }}
+            >
+              <Row
+                style={{
+                  columnGap: spacing.md,
                 }}
               >
-                <Icon icon="back" color={colors.palette.neutral100} size={20} />
-              </TouchableOpacity>
-            }
-            safeAreaEdges={[]}
+                <Col size={1.5}>
+                  <Button
+                    text="Share"
+                    style={$CTASecondaryButton}
+                    textStyle={$CTASecondaryButtonText}
+                    RightAccessory={() => (
+                      <Icon
+                        icon="ytl_share"
+                        color={colors.palette.neutral100}
+                        style={$CTAButtonIcon}
+                        size={18}
+                      />
+                    )}
+                    preset="reversed"
+                    onPress={() => {
+                      navigation.navigate("PaymentMethod")
+                    }}
+                  />
+                </Col>
+                <Col size={1.5}>
+                  <Button
+                    text="Pay"
+                    style={$CTASecondaryButton}
+                    textStyle={$CTASecondaryButtonText}
+                    RightAccessory={() => (
+                      <Icon
+                        icon="ytl_pay"
+                        color={colors.palette.neutral100}
+                        style={$CTAButtonIcon}
+                      />
+                    )}
+                    preset="reversed"
+                    onPress={() => {
+                      navigation.navigate("PaymentMethod")
+                    }}
+                  />
+                </Col>
+              </Row>
+            </Grid>
+          </View>
+
+          <View
+            style={{
+              height: spacing.lg,
+            }}
           />
-          <Text testID="login-heading" text="Confirmation" preset="heading" style={$logIn} />
-          <Text text="Tranferring to Shinly Eu" preset="subheading" style={$enterDetails} />
+
+          <View style={$DetailsContainer}>
+            <Grid
+              style={{
+                rowGap: spacing.md,
+              }}
+            >
+              <Row>
+                <Col>
+                  <Text style={$DetailsTitle}>To</Text>
+                </Col>
+                <Col>
+                  <Text style={$DetailsValue}>Shinly Eu</Text>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Text style={$DetailsTitle}>Transaction ID</Text>
+                </Col>
+                <Col>
+                  <Text style={$DetailsValue}>#9878976</Text>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Text style={$DetailsTitle}>Date</Text>
+                </Col>
+                <Col>
+                  <Text style={$DetailsValue}>Jul 10, 2024</Text>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Text style={$DetailsTitle}>Amount</Text>
+                </Col>
+                <Col>
+                  <Text style={$DetailsValue}>RM10.00</Text>
+                </Col>
+              </Row>
+            </Grid>
+          </View>
 
           <View
             style={{
@@ -66,12 +168,12 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
           />
 
           <Button
-            text="Confirm Transfer"
+            text="Go Home"
             style={$CTAPrimaryButton}
             textStyle={$CTAPrimaryButtonText}
             preset="reversed"
             onPress={() => {
-              navigation.navigate("Result")
+              navigation.navigate("Accounts")
             }}
           />
         </View>
@@ -96,36 +198,6 @@ const $enterDetails: TextStyle = {
   fontSize: 16,
 }
 
-const $customLeftAction: ViewStyle = {
-  height: "100%",
-  flexDirection: "row",
-}
-
-const $recipientContainerStyle: ViewStyle = {
-  marginTop: spacing.sm,
-  flexDirection: "column",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "100%",
-}
-
-const $recipientHeaingTextStyle: TextStyle = {
-  fontSize: 24,
-  color: colors.palette.neutral100,
-  fontFamily: typography.primary.medium,
-  fontWeight: "bold",
-  textAlign: "center",
-  marginTop: spacing.lg,
-}
-
-const $recipientPhoneNumberTextStyle: TextStyle = {
-  fontSize: 14,
-  color: colors.palette.neutral100,
-  marginBottom: spacing.sm,
-  fontFamily: typography.primary.medium,
-  textAlign: "center",
-}
-
 const $CTAPrimaryButton: ViewStyle = {
   borderRadius: 100,
   paddingVertical: spacing.xxxs,
@@ -136,4 +208,45 @@ const $CTAPrimaryButton: ViewStyle = {
 const $CTAPrimaryButtonText: TextStyle = {
   color: colors.palette.primary600,
   fontSize: 16,
+}
+
+const $DetailsContainer: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingVertical: spacing.lg,
+  backgroundColor: "#59608B21",
+  borderRadius: 10,
+}
+
+const $DetailsTitle: TextStyle = {
+  color: colors.textDim,
+  fontSize: 16,
+  fontFamily: typography.primary.medium,
+  fontWeight: "bold",
+  textAlign: "left",
+}
+
+const $DetailsValue: TextStyle = {
+  color: colors.palette.neutral100,
+  fontSize: 18,
+  fontFamily: typography.primary.medium,
+  textAlign: "right",
+}
+
+const $CTASecondaryButton: ViewStyle = {
+  borderRadius: 100,
+  borderColor: "#59608B21",
+  borderWidth: 2,
+  borderStyle: "solid",
+  paddingVertical: spacing.xs,
+  paddingHorizontal: spacing.xs,
+  backgroundColor: colors.transparent,
+}
+
+const $CTASecondaryButtonText: TextStyle = {
+  color: colors.palette.neutral100,
+  fontSize: 16,
+}
+
+const $CTAButtonIcon: ImageStyle = {
+  marginLeft: spacing.xs,
 }

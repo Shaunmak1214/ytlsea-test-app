@@ -12,4 +12,11 @@ export const loginSchema = z.object({
     .max(12, {
       message: "Please input valid phone number.",
     }),
+  password: z
+    .string({
+      message: "Please input valid password.",
+    })
+    .regex(/^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/, {
+      message: "Password must have at least one character and 1 number.",
+    }),
 })

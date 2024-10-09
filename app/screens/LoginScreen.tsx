@@ -1,15 +1,12 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useEffect, useState } from "react"
-import { TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
-import { $presets, Button, Icon, Screen, Text } from "../components"
+import React, { FC, useState } from "react"
+import { Pressable, TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
+import { $presets, Button, Icon, Screen, Text, TextField } from "../components"
 import { useStores } from "../models"
 import { AppStackScreenProps } from "../navigators"
 import { colors, spacing, typography } from "../theme"
 import { SafeAreaView } from "react-native-safe-area-context"
 import PhoneInput from "react-native-phone-number-input"
-import * as LocalAuthentication from "expo-local-authentication"
-import * as Contacts from "expo-contacts"
-import * as SecureStore from "expo-secure-store"
 import { useForm, Controller } from "react-hook-form"
 import { loginSchema } from "app/utils/schemas/loginSchemas"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,108 +18,42 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
 
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(0)
-  const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [secureTextEntry, setSecureTextEntry] = useState(false)
+
   const {
-    authenticationStore: { setAuthToken, setAuthPhoneNumber },
+    authenticationStore: { login },
   } = useStores()
 
   const [value, setValue] = useState("")
   const [_, setFormattedValue] = useState("")
 
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-    getValues,
-  } = useForm({
+  const { handleSubmit, control } = useForm({
     resolver: zodResolver(loginSchema),
   })
 
-  useEffect(() => {
-    console.log("errors", errors)
-  }, [errors])
-
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     console.log(data)
-    login()
+    handleLogin(data)
   }
 
-  function login() {
+  const handleLogin = async (data: any) => {
     setIsSubmitted(true)
     setAttemptsCount(attemptsCount + 1)
 
-    // Make a request to your server to get an authentication token.
-    // If successful, reset the fields and set the token.
-    setIsSubmitted(false)
+    const { phoneNumber, password } = data
 
-    setAuthPhoneNumber(getValues("phoneNumber"))
+    try {
+      const res = await login(phoneNumber, password)
+      console.log(data)
 
-    // We'll mock this with a fake token.
-    setAuthToken(String(Date.now()))
-  }
-
-  async function save(key: string, value: string) {
-    await SecureStore.setItemAsync(key, value)
-  }
-
-  async function getValueFor(key: string) {
-    const result = await SecureStore.getItemAsync(key)
-    if (result) {
-      // alert("🔐 Here's your value 🔐 \n" + result)
-    } else {
-      // alert("No values stored under that key.")
-    }
-  }
-
-  useEffect(() => {
-    checkBiometricSupport()
-
-    // Save the value
-    save("key", "value")
-
-    // Get the value
-    // console.log(getValueFor("key"))
-  }, [])
-
-  async function checkBiometricSupport() {
-    const hasHardware = await LocalAuthentication.hasHardwareAsync()
-    const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
-    const { status: contactStatus } = await Contacts.requestPermissionsAsync()
-    setBiometricAvailable(hasHardware && supportedAuthTypes.length > 0)
-
-    if (contactStatus === "granted") {
-      const contactResponse = await Contacts.getContactsAsync({
-        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
-      })
-
-      if (contactResponse.data.length > 0) {
-        // console.log(contactResponse.data[0])
+      if (res.kind !== "ok") {
+        console.log(res)
       }
-    }
-  }
-
-  // Trigger biometric authentication
-  async function handleBiometricAuth() {
-    const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
-
-    // Check if Face ID is available
-    const isFaceIDAvailable = supportedAuthTypes.includes(
-      LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
-    )
-
-    const authOptions = {
-      promptMessage: "Authenticate to login",
-      fallbackLabel: "Use PIN",
-      disableDeviceFallback: isFaceIDAvailable, // Disables fallback if Face ID is available
+    } catch (e) {
+      console.log(e)
     }
 
-    const auth = await LocalAuthentication.authenticateAsync(authOptions)
-
-    if (auth.success) {
-      login()
-    } else {
-      console.log("Authentication failed", auth)
-    }
+    setIsSubmitted(false)
   }
 
   return (
@@ -158,7 +89,6 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
               render={({ field, fieldState: { error } }) => (
                 <>
                   <PhoneInput
-                    // ref={phoneInput}
                     defaultValue={value}
                     defaultCode="MY"
                     layout="second"
@@ -190,6 +120,65 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
                   {error && (
                     <Text
                       text="Please input valid phone number."
+                      preset="formError"
+                      style={{
+                        ...$enterDetails,
+                        marginTop: spacing.sm,
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            />
+
+            <Controller
+              name="password"
+              control={control}
+              defaultValue=""
+              rules={{ required: true }}
+              render={({ field, fieldState: { error } }) => (
+                <>
+                  <TextField
+                    // label="Password"
+                    placeholder="Password"
+                    keyboardType="default"
+                    secureTextEntry={secureTextEntry}
+                    onChangeText={(text) => {
+                      field.onChange(text)
+                    }}
+                    style={
+                      {
+                        color: colors.palette.neutral100,
+                        fontSize: 18,
+                      } as TextStyle
+                    }
+                    inputWrapperStyle={
+                      {
+                        backgroundColor: "#192D5777",
+                        borderColor: colors.transparent,
+                        paddingVertical: spacing.md,
+                        borderRadius: 10,
+                        alignItems: "center",
+                      } as ViewStyle
+                    }
+                    RightAccessory={() => (
+                      <Pressable
+                        onPress={() => {
+                          setSecureTextEntry(!secureTextEntry)
+                        }}
+                        style={{
+                          marginRight: spacing.md,
+                        }}
+                      >
+                        <Icon icon="ytl_eye" color={colors.palette.neutral100} size={20} />
+                      </Pressable>
+                    )}
+                    {...field}
+                  />
+
+                  {error && (
+                    <Text
+                      text="Please input valid password."
                       preset="formError"
                       style={{
                         ...$enterDetails,
@@ -240,7 +229,6 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
                 RightAccessory={() => <Icon icon="caretRight" color={colors.text} />}
                 preset="reversed"
                 onPress={() => {
-                  // biometricAvailable ? handleBiometricAuth() : login()
                   handleSubmit(onSubmit)()
                 }}
               />
@@ -284,7 +272,7 @@ const $tapButton: ViewStyle = {
 
 const $fontNumberTextStyle: TextStyle = {
   ...$presets.default,
-  color: colors.text,
+  color: colors.palette.neutral100,
   fontSize: 22,
   fontFamily: typography.primary.medium,
 }

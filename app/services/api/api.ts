@@ -7,9 +7,8 @@
  */
 import { ApiResponse, ApisauceInstance, create } from "apisauce"
 import Config from "../../config"
-import { GeneralApiProblem, getGeneralApiProblem } from "./apiProblem"
-import type { ApiConfig, ApiFeedResponse } from "./api.types"
-import type { EpisodeSnapshotIn } from "../../models/Episode"
+import type { ApiConfig } from "./api.types"
+import { getGeneralApiProblem } from "./apiProblem"
 
 /**
  * Configuring the apisauce instance.
@@ -41,37 +40,27 @@ export class Api {
     })
   }
 
-  /**
-   * Gets a list of recent React Native Radio episodes.
-   */
-  async getEpisodes(): Promise<{ kind: "ok"; episodes: EpisodeSnapshotIn[] } | GeneralApiProblem> {
-    // make the api call
-    const response: ApiResponse<ApiFeedResponse> = await this.apisauce.get(
-      `api.json?rss_url=https%3A%2F%2Ffeeds.simplecast.com%2FhEI_f9Dx`,
-    )
-
-    // the typical ways to die when calling an api
-    if (!response.ok) {
-      const problem = getGeneralApiProblem(response)
-      if (problem) return problem
-    }
-
-    // transform the data into the format we are expecting
+  async login(phoneNumber: string, password: string) {
     try {
-      const rawData = response.data
+      // make the api call
+      const response: ApiResponse<any> = await this.apisauce.post("/auth/login", {
+        phoneNumber,
+        password,
+      })
+      console.log("login response", response)
 
-      // This is where we transform the data into the shape we expect for our MST model.
-      const episodes: EpisodeSnapshotIn[] =
-        rawData?.items.map((raw) => ({
-          ...raw,
-        })) ?? []
-
-      return { kind: "ok", episodes }
-    } catch (e) {
-      if (__DEV__ && e instanceof Error) {
-        console.error(`Bad data: ${e.message}\n${response.data}`, e.stack)
+      // the typical ways to die when calling an api
+      if (!response.ok) {
+        const problem = getGeneralApiProblem(response)
+        if (problem) return problem
       }
-      return { kind: "bad-data" }
+
+      const data = response
+
+      return { kind: "ok", data }
+    } catch (e) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data", error: e.message }
     }
   }
 }
