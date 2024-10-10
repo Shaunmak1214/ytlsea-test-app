@@ -1,6 +1,14 @@
 # Payment transferring module with biometrics authentication
 
-![alt text](https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3653.PNG?raw=true)
+<p align="center">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3653.PNG?raw=true" width="200">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3654.PNG?raw=true" width="200">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3655.PNG?raw=true" width="200">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3656.PNG?raw=true" width="200">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3657.PNG?raw=true" width="200">
+    <img src="https://github.com/Shaunmak1214/ytlsea-test-app/blob/master/demo/images/IMG_3658.PNG?raw=true" width="200">
+
+</p>
 
 ## Quick Start
 
