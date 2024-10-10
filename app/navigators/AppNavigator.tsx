@@ -30,6 +30,7 @@ import { colors } from "app/theme"
  */
 export type AppStackParamList = {
   Login: undefined
+  Password: undefined
   Stack: NavigatorScreenParams<YTLTabParamList>
 }
 
@@ -64,6 +65,7 @@ const AppStack = observer(function AppStack() {
       ) : (
         <>
           <Stack.Screen name="Login" component={Screens.LoginScreen} />
+          <Stack.Screen name="Password" component={Screens.PasswordScreen} />
         </>
       )}
 

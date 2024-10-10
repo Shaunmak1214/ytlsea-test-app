@@ -5,13 +5,14 @@ import { $presets, Header, Icon, ListView, Screen, Text } from "../../components
 import { AppStackScreenProps } from "../../navigators"
 import { colors, spacing, typography } from "../../theme"
 import * as Contacts from "expo-contacts"
-import { useNavigation } from "@react-navigation/native"
+import { useIsFocused, useNavigation } from "@react-navigation/native"
 import UserAvatar from "react-native-user-avatar"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema } from "app/utils/schemas/loginSchemas"
 import PhoneInput from "react-native-phone-number-input"
 import { debounce } from "app/utils/debounce"
+import { LoadingView } from "app/components/LoadingView"
 
 interface ContactListScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -22,18 +23,24 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
   const [filteredListData, setFilteredListData] = useState<Contacts.Contact[]>([])
   const [value, setValue] = useState("")
   const [_, setFormattedValue] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const { height } = useWindowDimensions()
-
+  const isFocused = useIsFocused()
   const navigation = useNavigation()
 
   const fetchSearchResults = async (term: string) => {
     try {
       const foundContacts = listData.filter((contact) => {
         return contact.phoneNumbers.some((phoneNumber) => {
-          return phoneNumber.number.includes(term)
+          // remove +60 from phone number
+          const cleanPhoneNumber = phoneNumber.number?.replace("+60", "").replace(/ /g, "")
+          const cleanTerm = term.replace("+60", "").replace(/ /g, "")
+
+          return (
+            phoneNumber.number?.trim().includes(term.trim()) ||
+            cleanTerm.trim().includes(cleanPhoneNumber)
+          )
         })
       })
 
@@ -46,7 +53,7 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
     }
   }
 
-  const debouncedSearch = debounce(fetchSearchResults, 500)
+  const debouncedSearch = debounce(fetchSearchResults, 250)
 
   const handleSearch = (text: string) => {
     setLoading(true)
@@ -69,15 +76,21 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
       })
 
       if (contactResponse.data.length > 0) {
-        setListData(contactResponse.data)
-        setFilteredListData(contactResponse.data)
+        const filteredContact = contactResponse.data.filter((item) => {
+          return item.phoneNumbers?.length > 0
+        })
+
+        setListData(filteredContact)
+        setFilteredListData(filteredContact)
       }
     }
+
+    setLoading(false)
   }
 
   useEffect(() => {
     checkContactList()
-  }, [])
+  }, [isFocused])
 
   return (
     <>
@@ -142,7 +155,6 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
                   codeTextStyle={$fontNumberTextStyle}
                   withDarkTheme
                   withShadow
-                  autoFocus
                 />
 
                 {error && (
@@ -161,7 +173,7 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
 
           <View style={$listContainerStyle}>
             <Text
-              text="Recent Transactions"
+              text="Recent contacts"
               preset="heading"
               style={
                 {
@@ -188,7 +200,7 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
               <View style={$listStyle}>
                 <ListView<string>
                   data={filteredListData}
-                  estimatedItemSize={1}
+                  estimatedItemSize={20}
                   renderItem={({ item, index }) => (
                     <TouchableOpacity
                       activeOpacity={1}
@@ -221,7 +233,7 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
                             style={$RecentTransactionsItemDetailsText}
                           />
                           <Text
-                            text={"qwe"}
+                            text={item?.phoneNumbers?.[0]?.number || ""}
                             preset="subheading"
                             style={$RecentTransactionsItemDetailsSubText}
                           />
@@ -235,6 +247,7 @@ export const ContactListScreen: FC<ContactListScreenProps> = observer(function C
           </View>
         </View>
       </Screen>
+      <LoadingView loading={loading} />
     </>
   )
 })

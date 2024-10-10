@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import React, { FC, useEffect, useRef, useState } from "react"
+import React, { FC, useEffect, useState } from "react"
 import {
   ImageStyle,
   TextStyle,
@@ -16,38 +16,92 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import UserAvatar from "react-native-user-avatar"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { loginSchema } from "app/utils/schemas/loginSchemas"
 import * as LocalAuthentication from "expo-local-authentication"
 import { transferSchema } from "app/utils/schemas/transferSchemas"
+import { Api } from "app/services/api"
+import { useStores } from "app/models"
+import Toast from "react-native-toast-message"
 
 interface TransferScreenProps extends AppStackScreenProps<"Login"> {}
 
 export const TransferScreen: FC<TransferScreenProps> = observer(function TransferScreen(_props) {
   const [recipient, setRecipient] = useState<Contacts.Contact>()
   const [biometricAvailable, setBiometricAvailable] = useState(false)
-
-  const [amount, setAmount] = useState("")
-  const [description, setDescription] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [balance, setBalance] = useState(0)
 
   const { height } = useWindowDimensions()
   const navigation = useNavigation()
   const route = useRoute()
 
   const {
+    authenticationStore: { authToken, accountNumber, getBalance },
+  } = useStores()
+
+  const api = new Api()
+
+  const {
     control,
-    formState: { errors },
+    formState: { errors, isValid },
     handleSubmit,
   } = useForm({
-    resolver: zodResolver(transferSchema),
+    resolver: zodResolver(transferSchema(balance)),
   })
+
+  const sendTransaction = async (data: any) => {
+    setLoading(true)
+    console.log("data: ", data)
+
+    try {
+      if (!authToken) {
+        Toast.show({
+          type: "error",
+          text1: "Please logout and try again.",
+        })
+      }
+
+      const trxData = {
+        ...data,
+        account: accountNumber,
+        transactionType: "transfer",
+        to: recipient.phoneNumbers[0].number,
+      }
+
+      const trxCreated = await api.createTransaction(authToken as string, trxData)
+
+      if (trxCreated.kind === "ok") {
+        navigation.navigate("Confirmation", {
+          trxData: {
+            ...trxData,
+            recipient,
+            ...trxCreated.data.data,
+          },
+        })
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Something went wrong.",
+          text2: trxCreated.message,
+        })
+      }
+    } catch (e) {
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong.",
+        text2: e.message,
+      })
+    }
+
+    setLoading(false)
+  }
 
   const onSubmit = async (data: any) => {
     console.log("data: ", data)
-    await handleBiometricAuth()
+    await handleBiometricAuth(data)
   }
 
   // Trigger biometric authentication
-  async function handleBiometricAuth() {
+  async function handleBiometricAuth(data: any) {
     const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
 
     // Check if Face ID is available
@@ -56,19 +110,20 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
     )
 
     const authOptions = {
-      promptMessage: "Authenticate to login",
+      promptMessage: "Authenticate to transfer",
       fallbackLabel: "Use PIN",
-      disableDeviceFallback: isFaceIDAvailable,
+      disableDeviceFallback: false,
     }
 
     const auth = await LocalAuthentication.authenticateAsync(authOptions)
 
     if (auth.success) {
-      console.log("transferring")
-
-      navigation.navigate("Confirmation")
+      sendTransaction(data)
     } else {
-      console.log("Authentication failed", auth)
+      Toast.show({
+        type: "error",
+        text1: "Authentication failed",
+      })
     }
   }
 
@@ -78,13 +133,27 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
     setBiometricAvailable(hasHardware && supportedAuthTypes.length > 0)
   }
 
+  async function populateBalance() {
+    const balance = await getBalance()
+
+    if (balance) {
+      setBalance(parseFloat(balance))
+    }
+  }
+
   useEffect(() => {
     checkBiometricSupport()
 
+    populateBalance()
+
     if (route.params.recipient === undefined) return
-    console.log(route.params.recipient)
     setRecipient(route.params.recipient)
   }, [route.params.recipient])
+
+  useEffect(() => {
+    console.log(errors)
+    console.log(isValid)
+  }, [errors, isValid])
 
   return (
     <>
@@ -146,9 +215,15 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
                   label="Amount"
                   labelTxOptions={{ prop: "label" }}
                   placeholder="10.00"
-                  keyboardType="number-pad"
+                  keyboardType="numeric"
                   onChangeText={(text) => {
-                    field.onChange(text)
+                    field.onChange(parseFloat(text))
+                  }}
+                  helper={"You can only transfer up to RM" + balance.toFixed(2)}
+                  HelperTextProps={{
+                    style: {
+                      color: colors.textDim,
+                    },
                   }}
                   style={
                     {
@@ -184,7 +259,7 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
 
                 {error && (
                   <Text
-                    text="Please input valid amount."
+                    text={error.message}
                     preset="formError"
                     style={{
                       ...$enterDetails,
@@ -237,7 +312,7 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
 
                 {error && (
                   <Text
-                    text="Please input valid phone number."
+                    text={error.message}
                     preset="formError"
                     style={{
                       ...$enterDetails,
@@ -266,6 +341,13 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
             style={$CTAPrimaryButton}
             textStyle={$CTAPrimaryButtonText}
             preset="reversed"
+            // disabled={!isValid}
+            disabledStyle={{
+              backgroundColor: "#9196B94A",
+            }}
+            disabledTextStyle={{
+              color: "#FFEED43E",
+            }}
             onPress={() => {
               handleSubmit(onSubmit)()
             }}
@@ -332,8 +414,4 @@ const $CTAPrimaryButton: ViewStyle = {
 const $CTAPrimaryButtonText: TextStyle = {
   color: colors.palette.primary600,
   fontSize: 16,
-}
-
-const $CTAButtonIcon: ImageStyle = {
-  marginLeft: spacing.xs,
 }

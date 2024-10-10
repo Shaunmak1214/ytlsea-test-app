@@ -34,6 +34,41 @@ export interface ApiFeedResponse {
   items: EpisodeItem[]
 }
 
+export interface IAccount {
+  accountName: string
+  accountNumber: string
+  accountType: string
+  currency: string
+  balance: number
+  isActive: boolean
+  token: string
+  provider: string
+  preferred: string
+  authorizedAmount: number
+  user: string
+}
+
+export interface ITransaction {
+  account: string
+  amount: number
+  transactionId: string
+  transactionType: string // "reload" or "transfer"
+  status: string // "pending", "success", "cancelled" or "failed"
+  errorCode?: string
+  errorMessage?: string
+  tokenId: string
+  to?: string // phone number
+  createdAt: string
+}
+
+export interface ITransactionCreate {
+  account: string
+  description: string
+  amount: number
+  transactionType: string
+  tokenId: string
+}
+
 /**
  * The options used to configure apisauce.
  */

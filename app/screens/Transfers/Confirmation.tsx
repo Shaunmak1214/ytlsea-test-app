@@ -1,17 +1,10 @@
 import { observer } from "mobx-react-lite"
-import React, { FC } from "react"
-import {
-  ImageStyle,
-  TextStyle,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  ViewStyle,
-} from "react-native"
-import { Button, Header, Icon, Screen, Text } from "../../components"
+import React, { FC, useEffect, useState } from "react"
+import { ImageStyle, TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
+import { Button, Icon, Screen, Text } from "../../components"
 import { AppStackScreenProps } from "../../navigators"
 import { colors, spacing, typography } from "../../theme"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute } from "@react-navigation/native"
 import { Col, Grid, Row } from "react-native-easy-grid"
 
 interface ConfirmationScreenrops extends AppStackScreenProps<"Login"> {}
@@ -19,8 +12,17 @@ interface ConfirmationScreenrops extends AppStackScreenProps<"Login"> {}
 export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function ConfirmationScreen(
   _props,
 ) {
+  const [completedTrxData, setCompletedTrxData] = useState<any>(null)
+
   const { height } = useWindowDimensions()
   const navigation = useNavigation()
+  const route = useRoute()
+
+  useEffect(() => {
+    if (route.params && route.params?.trxData === undefined) return
+
+    setCompletedTrxData(route.params.trxData)
+  }, [route.params.trxData])
 
   return (
     <>
@@ -49,7 +51,9 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
 
             <Text testID="login-heading" text="Transfer Complete" preset="heading" style={$logIn} />
             <Text
-              text="Tranferring a total of RM10.00 to Shinly Eu"
+              text={`Tranferred a total of RM${completedTrxData?.amount || 0} to ${
+                completedTrxData?.recipient?.firstName || ""
+              }`}
               preset="subheading"
               style={$enterDetails}
             />
@@ -79,7 +83,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                     )}
                     preset="reversed"
                     onPress={() => {
-                      navigation.navigate("PaymentMethod")
+                      navigation.navigate("Accounts")
                     }}
                   />
                 </Col>
@@ -97,7 +101,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                     )}
                     preset="reversed"
                     onPress={() => {
-                      navigation.navigate("PaymentMethod")
+                      navigation.navigate("Accounts")
                     }}
                   />
                 </Col>
@@ -122,7 +126,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                   <Text style={$DetailsTitle}>To</Text>
                 </Col>
                 <Col>
-                  <Text style={$DetailsValue}>Shinly Eu</Text>
+                  <Text style={$DetailsValue}>{completedTrxData?.recipient?.firstName || ""}</Text>
                 </Col>
               </Row>
 
@@ -131,7 +135,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                   <Text style={$DetailsTitle}>Transaction ID</Text>
                 </Col>
                 <Col>
-                  <Text style={$DetailsValue}>#9878976</Text>
+                  <Text style={$DetailsValue}>{completedTrxData?.transactionId || ""}</Text>
                 </Col>
               </Row>
 
@@ -140,7 +144,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                   <Text style={$DetailsTitle}>Date</Text>
                 </Col>
                 <Col>
-                  <Text style={$DetailsValue}>Jul 10, 2024</Text>
+                  <Text style={$DetailsValue}>{new Date().toLocaleDateString()}</Text>
                 </Col>
               </Row>
 
@@ -149,7 +153,7 @@ export const ConfirmationScreen: FC<ConfirmationScreenrops> = observer(function 
                   <Text style={$DetailsTitle}>Amount</Text>
                 </Col>
                 <Col>
-                  <Text style={$DetailsValue}>RM10.00</Text>
+                  <Text style={$DetailsValue}>RM{completedTrxData?.amount || ""}</Text>
                 </Col>
               </Row>
             </Grid>

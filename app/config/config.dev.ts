@@ -5,6 +5,9 @@
  *
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
+
+// https://basilisk-evolved-rarely.ngrok-free.app
+
 export default {
-  API_URL: "https://api.rss2json.com/v1/",
+  API_URL: "https://basilisk-evolved-rarely.ngrok-free.app/v1/",
 }

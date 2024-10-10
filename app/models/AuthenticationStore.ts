@@ -7,12 +7,15 @@ export const AuthenticationStoreModel = types
   .props({
     phoneNumber: "",
     authToken: types.maybe(types.string),
-    isAuthenticated: types.maybe(types.boolean),
     refreshToken: types.maybe(types.string),
+    accountNumber: "",
+    tokenId: "",
+    fullName: "",
+    basicRoleLocalAuthenticated: false,
   })
   .views((store) => ({
     get isAuthenticated() {
-      return !!store.authToken
+      return !!store.authToken // Automatically checks if authToken is present
     },
     get validationError() {
       if (store.phoneNumber.length === 0) return "can't be blank"
@@ -29,35 +32,42 @@ export const AuthenticationStoreModel = types
       if (authtoken !== null) {
         await this.setAuthToken(authtoken)
         await this.setRefreshToken(refreshtoken)
-        await this.setIsAuthenticated(true)
       } else {
-        await this.setIsAuthenticated(false)
         await this.setAuthToken("")
         await this.setRefreshToken("")
       }
     },
-    async login(phoneNumber: string, password: string) {
+    async login(password: string) {
       const api = new Api()
-      const result = await api.login(phoneNumber, password)
-      console.log(result)
+      const result = await api.login(store.phoneNumber, password)
       if (result.kind === "ok") {
         const data = result.data.data
         this.setAuthToken(data.tokens.access.token)
         this.setRefreshToken(data.tokens.refresh.token)
-        this.setIsAuthenticated(true)
+        this.setFullName(data.user.name)
         return result
       } else {
         return result
       }
     },
-    async getAuthToken() {
-      let token = store.authToken
-      if (token === "") {
-        token = await SecureStore.getItemAsync("authToken")
-        store.authToken = token
-        store.isAuthenticated = token !== ""
+    async checkPhoneNumber(phoneNumber: string) {
+      const api = new Api()
+      const result = await api.checkPhoneNumber(phoneNumber)
+      if (result.kind === "ok") {
+        this.setPhoneNumber(phoneNumber)
+        return result
+      } else {
+        return result
       }
-      return token
+    },
+    async setPhoneNumber(phoneNumber: string) {
+      store.phoneNumber = phoneNumber
+    },
+    async setAccountNumber(accountNumber: string) {
+      store.accountNumber = accountNumber
+    },
+    async setTokenId(tokenId: string) {
+      store.tokenId = tokenId
     },
     async setAuthToken(authToken: string) {
       store.authToken = authToken
@@ -67,13 +77,25 @@ export const AuthenticationStoreModel = types
       store.refreshToken = refreshToken
       await SecureStore.setItemAsync("refreshToken", refreshToken)
     },
-    async setIsAuthenticated(isAuthenticated: boolean) {
-      store.isAuthenticated = isAuthenticated
+    async setFullName(fullName: string) {
+      store.fullName = fullName
+    },
+    async setBasicRoleLocalAuthenticated(authenticated: boolean) {
+      store.basicRoleLocalAuthenticated = authenticated
+    },
+    async setBalance(balance: number) {
+      await SecureStore.setItemAsync("balance", balance.toString())
+    },
+    async getBalance() {
+      return await SecureStore.getItemAsync("balance")
     },
     async logout() {
-      store.authToken = ""
-      store.refreshToken = ""
-      store.isAuthenticated = false
+      this.setAuthToken("")
+      this.setRefreshToken("")
+      this.setFullName("")
+      this.setAccountNumber("")
+      this.setBasicRoleLocalAuthenticated(false)
+      this.setBalance(0)
       await SecureStore.deleteItemAsync("authToken")
       await SecureStore.deleteItemAsync("refreshToken")
     },

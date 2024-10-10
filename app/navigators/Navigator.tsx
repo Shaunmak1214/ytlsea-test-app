@@ -1,10 +1,9 @@
 import { BottomTabScreenProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { CompositeScreenProps, getFocusedRouteNameFromRoute } from "@react-navigation/native"
+import { CompositeScreenProps } from "@react-navigation/native"
 import React from "react"
 import { TextStyle, ViewStyle } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Icon } from "../components"
-import { DemoDebugScreen } from "../screens"
 import { colors, spacing, typography } from "../theme"
 import { AppStackParamList, AppStackScreenProps } from "./AppNavigator"
 import { AccountsScreen } from "app/screens/Accounts"
@@ -13,6 +12,7 @@ import { PaymentMethodScreen } from "app/screens/Transfers/PaymentMethod"
 import { ContactListScreen } from "app/screens/Transfers/ContactList"
 import { TransferScreen } from "app/screens/Transfers/Transfer"
 import { ConfirmationScreen } from "app/screens/Transfers/Confirmation"
+import { DemoDebugScreen } from "app/screens/DemoDebugScreen"
 
 export type YTLTabParamList = {
   Accounts: undefined

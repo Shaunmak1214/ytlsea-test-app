@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite"
-import React, { FC } from "react"
+import React, { FC, useEffect, useRef, useState } from "react"
 import {
+  ActivityIndicator,
   ImageStyle,
   TextStyle,
   TouchableOpacity,
@@ -11,22 +12,141 @@ import {
 import { Button, Icon, ListView, Screen, Text } from "../components"
 import { AppStackScreenProps } from "../navigators"
 import { colors, spacing } from "../theme"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { Col, Grid } from "react-native-easy-grid"
 import UserAvatar from "react-native-user-avatar"
-import { useNavigation } from "@react-navigation/native"
+import { useIsFocused, useNavigation } from "@react-navigation/native"
+import { useStores } from "app/models"
+import { Api, IAccount, ITransaction } from "app/services/api"
+import Toast from "react-native-toast-message"
+import { LoadingView } from "app/components/LoadingView"
+import * as LocalAuthentication from "expo-local-authentication"
+import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet"
+import * as Contacts from "expo-contacts"
 
-export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(function AccountsScreen(
+export const AccountsScreen: FC<AppStackScreenProps<"Stack">> = observer(function AccountsScreen(
   _props,
 ) {
-  const { height, width } = useWindowDimensions()
-
+  const { height } = useWindowDimensions()
+  const isFocused = useIsFocused()
   const navigation = useNavigation()
 
-  const listData =
-    `Tempor Id Ea Aliqua Pariatur Aliquip. Irure Minim Voluptate Consectetur Consequat Sint Esse Proident Irure. Nostrud Elit Veniam Nostrud Excepteur Minim Deserunt Quis Dolore Velit Nulla Irure Voluptate Tempor. Occaecat Amet Laboris Nostrud Qui Do Quis Lorem Ex Elit Fugiat Deserunt. In Pariatur Excepteur Exercitation Ex Incididunt Qui Mollit Dolor Sit Non. Culpa Officia Minim Cillum Exercitation Voluptate Proident Laboris Et Est Reprehenderit Quis Pariatur Nisi`
-      .split(".")
-      .map((item) => item.trim())
+  const {
+    authenticationStore: {
+      authToken,
+      fullName,
+      setAccountNumber,
+      setTokenId,
+      basicRoleLocalAuthenticated,
+      setBasicRoleLocalAuthenticated,
+      setBalance,
+    },
+  } = useStores()
+
+  const [loading, setLoading] = useState(false)
+  const [account, setAccount] = useState<IAccount | null>(null)
+  const [transactions, setTransactions] = useState<ITransaction[] | null>(null)
+  const [balanceVisible, setBalanceVisible] = useState(false)
+
+  const [recipientSelected, setRecipientSelected] = useState<{
+    to: string
+  } | null>(null)
+
+  const sheetRef = useRef<BottomSheetMethods>(null)
+
+  const api = new Api()
+
+  const getAccounts = async (authToken: string) => {
+    setLoading(true)
+    const result = await api.getAccount(authToken)
+    if (result.kind === "ok") {
+      setAccount(result.data.data)
+      setAccountNumber(result.data?.data.accountNumber)
+      setTokenId(result.data?.data.tokenId)
+      setBalance(result.data?.data.balance)
+      setLoading(false)
+    } else {
+      setLoading(false)
+    }
+  }
+
+  const getTransactions = async (authToken: string) => {
+    setLoading(true)
+    const result = await api.getTransactions(authToken)
+    if (result.kind === "ok") {
+      let data = result.data.data as ITransaction[]
+
+      data = data.filter((item) => item.status === "success" && item.transactionType === "transfer")
+
+      setTransactions(data)
+
+      setLoading(false)
+    } else {
+      setLoading(false)
+    }
+  }
+
+  async function retrieveContactByPhoneNumber(to: string) {
+    const { status: contactStatus } = await Contacts.requestPermissionsAsync()
+
+    if (contactStatus === "granted") {
+      const contactResponse = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+      })
+
+      if (contactResponse.data.length > 0) {
+        const contact = contactResponse.data.find((contact) =>
+          contact.phoneNumbers?.some((phoneNumber) => phoneNumber.number === to),
+        )
+
+        if (contact) {
+          return contact
+        }
+      }
+    }
+
+    setLoading(false)
+  }
+
+  async function handleAuthenticateForBalance() {
+    if (basicRoleLocalAuthenticated) {
+      setBalanceVisible(true)
+      return
+    }
+
+    const supportedAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
+
+    // Check if Face ID is available
+    const isFaceIDAvailable = supportedAuthTypes.includes(
+      LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+    )
+
+    const authOptions = {
+      promptMessage: "Authenticate to transfer",
+      fallbackLabel: "Use PIN",
+      disableDeviceFallback: isFaceIDAvailable,
+    }
+
+    const auth = await LocalAuthentication.authenticateAsync(authOptions)
+
+    if (auth.success) {
+      setBasicRoleLocalAuthenticated(true)
+      setBalanceVisible(true)
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Authentication failed",
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (authToken) {
+      getAccounts(authToken)
+      getTransactions(authToken)
+    }
+
+    sheetRef.current?.close()
+  }, [authToken, isFocused])
 
   return (
     <>
@@ -50,14 +170,33 @@ export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(func
                 <Icon icon="settings" color={colors.palette.primary500} size={24} />
               </TouchableOpacity>
             </View>
-            <Text text="Shaun Mak." preset="subheading" style={$muted} />
+            <Text text={fullName || ""} preset="subheading" style={$muted} />
           </View>
 
           <View style={$CTAContainerView}>
             <Text text="Total balance" preset="subheading" style={$containerHeading} />
             <View style={$balanceContainer}>
-              <Text text="$100.00" preset="heading" style={$balance} />
-              <TouchableOpacity activeOpacity={1} style={$balanceViewerToggle} onPress={() => {}}>
+              {balanceVisible ? (
+                <Text
+                  text={account ? "RM" + account?.balance.toFixed(2) : "RM0.00"}
+                  preset="heading"
+                  style={$balance}
+                />
+              ) : (
+                <Text text={"RM***"} preset="heading" style={$balance} />
+              )}
+
+              <TouchableOpacity
+                activeOpacity={1}
+                style={$balanceViewerToggle}
+                onPress={() => {
+                  if (balanceVisible) {
+                    setBalanceVisible(false)
+                  } else {
+                    handleAuthenticateForBalance()
+                  }
+                }}
+              >
                 <Icon icon="view" color={colors.palette.primary600} size={20} />
               </TouchableOpacity>
             </View>
@@ -73,7 +212,11 @@ export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(func
                   )}
                   preset="reversed"
                   onPress={() => {
-                    navigation.navigate("PaymentMethod")
+                    Toast.show({
+                      type: "info",
+                      text1: "Coming soon ...",
+                      position: "bottom",
+                    })
                   }}
                 />
               </Col>
@@ -98,7 +241,11 @@ export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(func
                   textStyle={$CTASecondaryButtonText}
                   preset="reversed"
                   onPress={() => {
-                    navigation.navigate("PaymentMethod")
+                    Toast.show({
+                      type: "info",
+                      text1: "Coming soon ...",
+                      position: "bottom",
+                    })
                   }}
                 />
               </Col>
@@ -118,62 +265,135 @@ export const AccountsScreen: FC<AppStackScreenProps<"Accounts">> = observer(func
             />
 
             <View style={$listStyle}>
-              <ListView<string>
-                data={listData}
-                estimatedItemSize={1}
-                renderItem={({ item, index }) => (
-                  <View style={$RecentTransactionsItem}>
-                    <View
-                      style={
-                        {
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                        } as ViewStyle
-                      }
+              {transactions ? (
+                <ListView<string>
+                  data={transactions}
+                  estimatedItemSize={5}
+                  renderItem={({ item, index }: { item: ITransaction; index: number }) => (
+                    <TouchableOpacity
+                      style={$RecentTransactionsItem}
+                      onLongPress={() => {
+                        setRecipientSelected({
+                          to: item.to,
+                        })
+                        sheetRef.current?.open()
+                      }}
                     >
-                      <View style={$RecentTransactionsItemAvatar}>
-                        <UserAvatar
-                          size={45}
-                          name="Avishay Bar"
-                          bgColors={["#141414FF", "#3F3F3FFF"]}
-                        />
+                      <View
+                        style={
+                          {
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                          } as ViewStyle
+                        }
+                      >
+                        <View style={$RecentTransactionsItemAvatar}>
+                          <UserAvatar
+                            size={45}
+                            name={item.to}
+                            bgColors={["#141414FF", "#3F3F3FFF"]}
+                          />
+                        </View>
+                        <View style={$RecentTransactionsItemDetails}>
+                          <Text
+                            text={item.to}
+                            preset="bold"
+                            style={$RecentTransactionsItemDetailsText}
+                          />
+                          <Text
+                            text={new Date(item.createdAt).toLocaleDateString()}
+                            preset="subheading"
+                            style={$RecentTransactionsItemDetailsSubText}
+                          />
+                        </View>
                       </View>
-                      <View style={$RecentTransactionsItemDetails}>
-                        <Text
-                          text="Avishay Bar"
-                          preset="bold"
-                          style={$RecentTransactionsItemDetailsText}
-                        />
-                        <Text
-                          text="1 Jul 2024"
-                          preset="subheading"
-                          style={$RecentTransactionsItemDetailsSubText}
-                        />
-                      </View>
-                    </View>
 
-                    <Text
-                      text="RM 400.40"
-                      preset="subheading"
-                      style={$RecentTransactionsItemHeadingText}
-                    />
-                  </View>
-                )}
-              />
+                      <Text
+                        text={`RM${item.amount.toFixed(2)}`}
+                        preset="subheading"
+                        style={$RecentTransactionsItemHeadingText}
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
+              ) : (
+                <ActivityIndicator size={"large"} />
+              )}
             </View>
           </View>
 
           <View style={$RecentTransactions}></View>
         </View>
       </Screen>
+      <LoadingView loading={loading} />
+      {recipientSelected && (
+        <BottomSheet
+          ref={sheetRef}
+          style={{
+            backgroundColor: colors.palette.primary600,
+            padding: 20,
+          }}
+          height={height * 0.2}
+        >
+          <View style={$QuickActionItem}>
+            <View style={$QuickActionItemView}>
+              <View style={$RecentTransactionsItemAvatar}>
+                <UserAvatar
+                  size={45}
+                  name={recipientSelected.to}
+                  bgColors={["#141414FF", "#3F3F3FFF"]}
+                />
+              </View>
+              <View style={$RecentTransactionsItemDetails}>
+                <Text
+                  text={recipientSelected.to}
+                  preset="bold"
+                  style={$RecentTransactionsItemDetailsText}
+                />
+              </View>
+            </View>
+
+            <Button
+              text="Quick Send"
+              style={[
+                $CTAPrimaryButton,
+                {
+                  paddingVertical: 0,
+                },
+              ]}
+              textStyle={$CTAPrimaryButtonText}
+              RightAccessory={() => (
+                <Icon
+                  icon="caretRight"
+                  color={colors.palette.primary600}
+                  style={$CTAButtonIcon}
+                  size={14}
+                />
+              )}
+              preset="reversed"
+              onPress={async () => {
+                const recipient = await retrieveContactByPhoneNumber(recipientSelected.to)
+                if (!recipient) {
+                  Toast.show({
+                    type: "error",
+                    text1: "Contact not found",
+                  })
+                  return
+                }
+
+                navigation.navigate("Transfer", {
+                  recipient,
+                })
+
+                sheetRef.current?.close()
+              }}
+            />
+          </View>
+        </BottomSheet>
+      )}
     </>
   )
 })
-
-const $safeAreaView: ViewStyle = {
-  flex: 1,
-  backgroundColor: colors.background,
-}
 
 const $innerScreenContentContainer: ViewStyle = {
   paddingTop: spacing.lg,
@@ -297,6 +517,19 @@ const $RecentTransactionsItemDetails: ViewStyle = {
   flexDirection: "column",
   justifyContent: "space-between",
   alignItems: "flex-start",
+}
+
+const $QuickActionItem: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  backgroundColor: colors.transparent,
+}
+
+export const $QuickActionItemView: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "flex-start",
+  alignItems: "center",
 }
 
 const $heading: TextStyle = {

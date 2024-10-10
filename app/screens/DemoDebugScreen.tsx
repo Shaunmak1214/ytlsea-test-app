@@ -1,6 +1,6 @@
 import React, { FC } from "react"
 import * as Application from "expo-application"
-import { Linking, Platform, TextStyle, View, ViewStyle } from "react-native"
+import { Linking, TextStyle, View, ViewStyle } from "react-native"
 import { Button, ListItem, Screen, Text } from "../components"
 import { YTLTabParamList } from "../navigators/Navigator"
 import { colors, spacing } from "../theme"
@@ -104,11 +104,14 @@ export const DemoDebugScreen: FC<YTLTabParamList<"DemoDebugScreen">> = function 
         />
       </View>
       <View style={$buttonContainer}>
-        <Button style={$button} tx="demoDebugScreen.reactotron" onPress={demoReactotron} />
-        <Text style={$hint} tx={`demoDebugScreen.${Platform.OS}ReactotronHint` as const} />
-      </View>
-      <View style={$buttonContainer}>
-        <Button style={$button} tx="common.logOut" onPress={logout} />
+        <Button
+          style={$CTAPrimaryButton}
+          textStyle={{
+            color: colors.palette.primary600,
+          }}
+          tx="common.logOut"
+          onPress={logout}
+        />
       </View>
     </Screen>
   )
@@ -125,7 +128,7 @@ const $title: TextStyle = {
 }
 
 const $reportBugsLink: TextStyle = {
-  color: colors.tint,
+  color: colors.palette.neutral100,
   marginBottom: spacing.lg,
   alignSelf: isRTL ? "flex-start" : "flex-end",
 }
@@ -138,17 +141,13 @@ const $itemsContainer: ViewStyle = {
   marginBottom: spacing.xl,
 }
 
-const $button: ViewStyle = {
-  marginBottom: spacing.xs,
+const $CTAPrimaryButton: ViewStyle = {
+  borderRadius: 100,
+  paddingVertical: spacing.xxxs,
+  paddingHorizontal: spacing.xs,
+  backgroundColor: colors.palette.accent500,
 }
 
 const $buttonContainer: ViewStyle = {
   marginBottom: spacing.md,
-}
-
-const $hint: TextStyle = {
-  color: colors.palette.neutral600,
-  fontSize: 12,
-  lineHeight: 15,
-  paddingBottom: spacing.lg,
 }

@@ -1,60 +1,61 @@
 import { observer } from "mobx-react-lite"
 import React, { FC, useState } from "react"
-import { TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
-import { $presets, Button, Icon, Screen, Text } from "../components"
+import { Pressable, TextStyle, useWindowDimensions, View, ViewStyle } from "react-native"
+import { $presets, Button, Icon, Screen, Text, TextField } from "../components"
 import { useStores } from "../models"
 import { AppStackScreenProps } from "../navigators"
 import { colors, spacing, typography } from "../theme"
 import { SafeAreaView } from "react-native-safe-area-context"
-import PhoneInput from "react-native-phone-number-input"
 import { useForm, Controller } from "react-hook-form"
-import { loginSchema } from "app/utils/schemas/loginSchemas"
+import { passwordSchema } from "app/utils/schemas/loginSchemas"
 import { zodResolver } from "@hookform/resolvers/zod"
-import Toast from "react-native-toast-message"
 import { useNavigation } from "@react-navigation/native"
+import Toast from "react-native-toast-message"
 import { LoadingView } from "app/components/LoadingView"
 
-interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
+interface PasswordScreenProps extends AppStackScreenProps<"Password"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_props) {
+export const PasswordScreen: FC<PasswordScreenProps> = observer(function PasswordScreen(_props) {
   const { height, width } = useWindowDimensions()
 
   const [isSubmitted, setIsSubmitted] = useState(false)
-
-  const {
-    authenticationStore: { checkPhoneNumber },
-  } = useStores()
-
-  const [value, setValue] = useState("")
-  const [_, setFormattedValue] = useState("")
-
-  const { handleSubmit, control } = useForm({
-    resolver: zodResolver(loginSchema),
-  })
+  const [attemptsCount, setAttemptsCount] = useState(0)
+  const [secureTextEntry, setSecureTextEntry] = useState(false)
 
   const navigation = useNavigation()
 
+  const {
+    authenticationStore: { login },
+  } = useStores()
+
+  const { handleSubmit, control } = useForm({
+    resolver: zodResolver(passwordSchema),
+  })
+
   const onSubmit = async (data: any) => {
     setIsSubmitted(true)
+    setAttemptsCount(attemptsCount + 1)
 
-    const { phoneNumber } = data
+    const { password } = data
 
     try {
-      const res = await checkPhoneNumber(phoneNumber)
+      const res = await login(password)
 
       if (res.kind === "ok") {
-        navigation.navigate("Password")
+        navigation.navigate("Stack")
       } else {
         Toast.show({
           type: "error",
-          text1: "No phone number found",
+          text1: "Password is incorrect",
+          text2: res.message,
         })
       }
     } catch (e) {
       console.log(e)
       Toast.show({
         type: "error",
-        text1: "No phone number found",
+        text1: "Password is incorrect",
+        text2: e.message,
       })
     }
 
@@ -73,55 +74,73 @@ export const LoginScreen: FC<LoginScreenProps> = observer(function LoginScreen(_
           >
             <Text
               testID="login-heading"
-              text="Enter your mobile number"
+              text="Enter your password"
               preset="heading"
               style={$logIn}
             />
             <Text
-              text="We'll use this to check your eligibility, and to help you seetup your account."
+              text="If you forgot your password, good luck then!"
               preset="subheading"
               style={$enterDetails}
             />
+            {attemptsCount > 2 && (
+              <Text
+                text="If you forgot your password, please contact our support team."
+                size="sm"
+                weight="light"
+                style={$hint}
+              />
+            )}
 
             <Controller
-              name="phoneNumber"
+              name="password"
               control={control}
               defaultValue=""
               rules={{ required: true }}
               render={({ field, fieldState: { error } }) => (
                 <>
-                  <PhoneInput
-                    defaultValue={value}
-                    defaultCode="MY"
-                    layout="second"
+                  <TextField
+                    placeholder="Password"
+                    keyboardType="default"
+                    secureTextEntry={secureTextEntry}
                     onChangeText={(text) => {
-                      setValue(text)
-                    }}
-                    onChangeFormattedText={(text) => {
-                      setFormattedValue(text)
                       field.onChange(text)
                     }}
-                    containerStyle={{
-                      backgroundColor: colors.transparent,
-                    }}
-                    textContainerStyle={{
-                      backgroundColor: colors.transparent,
-                    }}
-                    textInputStyle={
+                    style={
                       {
-                        ...$fontNumberTextStyle,
-                        marginLeft: -10,
+                        color: colors.palette.neutral100,
+                        fontSize: 18,
                       } as TextStyle
                     }
-                    codeTextStyle={$fontNumberTextStyle}
-                    withDarkTheme
-                    withShadow
+                    inputWrapperStyle={
+                      {
+                        backgroundColor: "#192D5777",
+                        borderColor: colors.transparent,
+                        paddingVertical: spacing.md,
+                        borderRadius: 10,
+                        alignItems: "center",
+                      } as ViewStyle
+                    }
+                    RightAccessory={() => (
+                      <Pressable
+                        onPress={() => {
+                          setSecureTextEntry(!secureTextEntry)
+                        }}
+                        style={{
+                          marginRight: spacing.md,
+                          paddingHorizontal: spacing.sm,
+                        }}
+                      >
+                        <Icon icon="ytl_eye" color={colors.palette.neutral100} size={20} />
+                      </Pressable>
+                    )}
                     autoFocus
+                    {...field}
                   />
 
                   {error && (
                     <Text
-                      text="Please input valid phone number."
+                      text="Please input valid password."
                       preset="formError"
                       style={{
                         ...$enterDetails,
@@ -203,6 +222,11 @@ const $logIn: TextStyle = {
 const $enterDetails: TextStyle = {
   marginBottom: spacing.lg,
   fontSize: 16,
+}
+
+const $hint: TextStyle = {
+  color: colors.tint,
+  marginBottom: spacing.md,
 }
 
 const $tapButton: ViewStyle = {

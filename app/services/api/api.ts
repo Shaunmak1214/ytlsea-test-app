@@ -7,7 +7,7 @@
  */
 import { ApiResponse, ApisauceInstance, create } from "apisauce"
 import Config from "../../config"
-import type { ApiConfig } from "./api.types"
+import type { ApiConfig, ITransactionCreate } from "./api.types"
 import { getGeneralApiProblem } from "./apiProblem"
 
 /**
@@ -48,6 +48,116 @@ export class Api {
         password,
       })
       console.log("login response", response)
+
+      // the typical ways to die when calling an api
+      if (!response.ok) {
+        const problem = getGeneralApiProblem(response)
+        if (problem) {
+          return {
+            ...problem,
+            message: response.data?.message || "",
+          }
+        }
+      }
+
+      const data = response
+
+      return { kind: "ok", data }
+    } catch (e) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data", error: e.message }
+    }
+  }
+
+  async checkPhoneNumber(phoneNumber: string) {
+    try {
+      // make the api call
+      const response: ApiResponse<any> = await this.apisauce.post(`users/by-phone-number`, {
+        phoneNumber,
+      })
+      console.log("checkPhoneNumber response", response)
+
+      // the typical ways to die when calling an api
+      if (!response.ok) {
+        const problem = getGeneralApiProblem(response)
+        if (problem) return problem
+      }
+
+      const data = response
+
+      return { kind: "ok", data }
+    } catch (e) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data", error: e.message }
+    }
+  }
+
+  async getAccount(authToken: string) {
+    try {
+      // make the api call
+      const response: ApiResponse<any> = await this.apisauce.get(
+        `accounts/by-user-id`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      )
+      console.log("getAccount response", response)
+
+      // the typical ways to die when calling an api
+      if (!response.ok) {
+        const problem = getGeneralApiProblem(response)
+        if (problem) return problem
+      }
+
+      const data = response
+
+      return { kind: "ok", data }
+    } catch (e) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data", error: e.message }
+    }
+  }
+
+  async getTransactions(authToken: string) {
+    try {
+      // make the api call
+      const response: ApiResponse<any> = await this.apisauce.get(
+        `transactions/by-user-id`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      )
+      console.log("getTransactions response", response)
+
+      // the typical ways to die when calling an api
+      if (!response.ok) {
+        const problem = getGeneralApiProblem(response)
+        if (problem) return problem
+      }
+
+      const data = response
+
+      return { kind: "ok", data }
+    } catch (e) {
+      __DEV__ && console.tron.log(e.message)
+      return { kind: "bad-data", error: e.message }
+    }
+  }
+
+  async createTransaction(authToken: string, trxData: ITransactionCreate) {
+    try {
+      // make the api call
+      const response: ApiResponse<any> = await this.apisauce.post(`transactions`, trxData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
 
       // the typical ways to die when calling an api
       if (!response.ok) {
