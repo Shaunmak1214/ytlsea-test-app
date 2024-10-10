@@ -22,6 +22,7 @@ import { LoadingView } from "app/components/LoadingView"
 import * as LocalAuthentication from "expo-local-authentication"
 import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet"
 import * as Contacts from "expo-contacts"
+import * as Haptics from "expo-haptics"
 
 export const AccountsScreen: FC<AppStackScreenProps<"Stack">> = observer(function AccountsScreen(
   _props,
@@ -129,6 +130,7 @@ export const AccountsScreen: FC<AppStackScreenProps<"Stack">> = observer(functio
     const auth = await LocalAuthentication.authenticateAsync(authOptions)
 
     if (auth.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setBasicRoleLocalAuthenticated(true)
       setBalanceVisible(true)
     } else {
@@ -136,6 +138,7 @@ export const AccountsScreen: FC<AppStackScreenProps<"Stack">> = observer(functio
         type: "error",
         text1: "Authentication failed",
       })
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     }
   }
 
@@ -277,6 +280,7 @@ export const AccountsScreen: FC<AppStackScreenProps<"Stack">> = observer(functio
                           to: item.to,
                         })
                         sheetRef.current?.open()
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
                       }}
                     >
                       <View

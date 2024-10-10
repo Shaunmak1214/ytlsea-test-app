@@ -21,6 +21,7 @@ import { transferSchema } from "app/utils/schemas/transferSchemas"
 import { Api } from "app/services/api"
 import { useStores } from "app/models"
 import Toast from "react-native-toast-message"
+import * as Haptics from "expo-haptics"
 
 interface TransferScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -70,6 +71,8 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
       const trxCreated = await api.createTransaction(authToken as string, trxData)
 
       if (trxCreated.kind === "ok") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
         navigation.navigate("Confirmation", {
           trxData: {
             ...trxData,
@@ -118,12 +121,14 @@ export const TransferScreen: FC<TransferScreenProps> = observer(function Transfe
     const auth = await LocalAuthentication.authenticateAsync(authOptions)
 
     if (auth.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sendTransaction(data)
     } else {
       Toast.show({
         type: "error",
         text1: "Authentication failed",
       })
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
     }
   }
 
