@@ -10,4 +10,5 @@
 
 export default {
   API_URL: "https://basilisk-evolved-rarely.ngrok-free.app/v1/",
+  CHECKSUM_KEY: "yIQGGUb9Rx",
 }

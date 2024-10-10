@@ -9,6 +9,7 @@ import { ApiResponse, ApisauceInstance, create } from "apisauce"
 import Config from "../../config"
 import type { ApiConfig, ITransactionCreate } from "./api.types"
 import { getGeneralApiProblem } from "./apiProblem"
+import generateChecksum from "app/utils/security/checksum"
 
 /**
  * Configuring the apisauce instance.
@@ -153,11 +154,18 @@ export class Api {
   async createTransaction(authToken: string, trxData: ITransactionCreate) {
     try {
       // make the api call
-      const response: ApiResponse<any> = await this.apisauce.post(`transactions`, trxData, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
+      const response: ApiResponse<any> = await this.apisauce.post(
+        `transactions`,
+        {
+          ...trxData,
+          checksum: generateChecksum(trxData),
         },
-      })
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      )
 
       // the typical ways to die when calling an api
       if (!response.ok) {

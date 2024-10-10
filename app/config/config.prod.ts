@@ -6,5 +6,6 @@
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
 export default {
-  API_URL: "http://localhost:9876/api/v1/",
+  API_URL: "https://basilisk-evolved-rarely.ngrok-free.app/v1/",
+  CHECKSUM_KEY: "yIQGGUb9Rx",
 }
